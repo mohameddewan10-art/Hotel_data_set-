@@ -9,7 +9,6 @@ st.title("Hotel Booking Dashboard")
 
 sns.set_theme(style="whitegrid")
 
-# load data
 st.cache_data
 def load_data():
     df = pd.read_csv("hotels_cleaned.csv")
@@ -19,7 +18,6 @@ def load_data():
 
 df = load_data()
 
-# dataset overview
 st.header("Dataset Overview")
 
 col1, col2, col3 = st.columns(3)
@@ -33,7 +31,6 @@ st.dataframe(df.head(), use_container_width=True)
 st.subheader("Summary Statistics")
 st.write(df.describe())
 
-# filter
 st.header("Filters")
 
 hotel_type = st.selectbox(
@@ -44,34 +41,30 @@ hotel_type = st.selectbox(
 if hotel_type != "All":
     df = df[df["hotel"] == hotel_type]
 
-# inter active chart
 st.header("Interactive Charts")
 
-# split into 2 colomn cuz viz size 
 chart_col1, chart_col2 = st.columns(2)
 
 with chart_col1:
     st.subheader("ADR by Hotel Type")
-    fig1, ax1 = plt.subplots(figsize=(4, 2.5))  
+    fig1, ax1 = plt.subplots(figsize=(4, 2.5))
     sns.boxplot(x="hotel", y="adr", data=df, ax=ax1)
     st.pyplot(fig1)
 
 with chart_col2:
     st.subheader("Cancellation by Market Segment")
-    fig2, ax2 = plt.subplots(figsize=(4, 2.5))  
+    fig2, ax2 = plt.subplots(figsize=(4, 2.5))
     sns.boxplot(x="market_segment", y="is_canceled", data=df, ax=ax2)
-    plt.xticks(rotation=45, fontsize=8)        
+    plt.xticks(rotation=45, fontsize=8)
     st.pyplot(fig2)
 
-
 st.subheader("Scatter Plot: Lead Time vs ADR")
-
 
 df_filtered_adr = df[df['adr'] < 500]
 sample_size = min(5000, len(df_filtered_adr))
 sample = df_filtered_adr.sample(sample_size, random_state=42)
 
-fig3, ax3 = plt.subplots(figsize=(8, 3.5))  
+fig3, ax3 = plt.subplots(figsize=(8, 3.5))
 scatter = ax3.scatter(
     sample['lead_time'], sample['adr'],
     c=sample['is_canceled'], cmap='coolwarm',
@@ -80,12 +73,40 @@ scatter = ax3.scatter(
 ax3.set_xlabel("Lead Time")
 ax3.set_ylabel("ADR")
 
-
 cbar = fig3.colorbar(scatter, ax=ax3)
 cbar.set_label("Is Canceled")
 
 st.pyplot(fig3)
 
+st.header("Bookings Heatmap")
+
+pivot_heatmap = df.pivot_table(
+    index='arrival_date_month',
+    columns='hotel',
+    values='is_canceled',
+    aggfunc='count'
+)
+
+fig4, ax4 = plt.subplots(figsize=(10, 6))
+sns.heatmap(
+    pivot_heatmap,
+    annot=True,
+    fmt=',',
+    cmap='coolwarm',
+    linewidths=0.5,
+    ax=ax4
+    )
+
+ax4.set_title('Number of Bookings by Month and Hotel Type')
+ax4.set_xlabel('Hotel Type')
+ax4.set_ylabel('Month')
+
+st.pyplot(fig4)
+
+st.write(
+    "This chart shows how bookings are distributed across months and hotel types. "
+    "It helps to understand demand differences between City and Resort hotels."
+)
 
 st.header("Cancellation Prediction Model")
 
